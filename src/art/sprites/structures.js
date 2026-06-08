@@ -10,7 +10,7 @@
    builder, so adding a new building art = add one function + one entry.
    ================================================================= */
 
-import { makeBuffer, px, outline, speckle, vGradient } from '../pixelArt.js';
+import { makeBuffer, px, dot, outline, speckle, vGradient } from '../pixelArt.js';
 import { Palette } from '../palette.js';
 
 const _cache = new Map();
@@ -174,6 +174,173 @@ const builders = {
     }
     return { canvas, w, h };
   },
+
+  /* =========================================================
+     Decorative props — small details that dress the town.
+     ========================================================= */
+
+  /* ----- Wrought-iron lamp post ----- */
+  lamppost() {
+    const w = 12, h = 46;
+    const { canvas, ctx } = makeBuffer(w, h);
+    px(ctx, 3, h - 3, 6, 2, Palette.shadow);
+    px(ctx, 3, h - 6, 6, 5, Palette.iron[1]); outline(ctx, 3, h - 6, 6, 5, Palette.iron[0]);
+    px(ctx, 5, 6, 2, h - 11, Palette.iron[2]);           // post
+    px(ctx, 2, 3, 8, 9, Palette.iron[1]); outline(ctx, 2, 3, 8, 9, Palette.iron[0]); // housing
+    px(ctx, 3, 5, 6, 6, Palette.glassLit[2]);
+    px(ctx, 4, 5, 4, 5, Palette.glassLit[3]);
+    px(ctx, 5, 6, 2, 3, '#fff1b0');                      // flame core
+    px(ctx, 3, 1, 6, 2, Palette.iron[2]);                // cap
+    px(ctx, 5, 0, 2, 1, Palette.gold[3]);                // finial
+    return { canvas, w, h };
+  },
+
+  stallRed()   { return makeStall('#bf4d3f', '#e6dcc4'); },
+  stallGreen() { return makeStall('#4f8a55', '#e6dcc4'); },
+
+  /* ----- Plaza bench ----- */
+  bench() {
+    const w = 26, h = 14;
+    const { canvas, ctx } = makeBuffer(w, h);
+    px(ctx, 2, h - 2, w - 4, 2, Palette.shadow);
+    px(ctx, 3, h - 6, 3, 6, Palette.wood[0]);
+    px(ctx, w - 6, h - 6, 3, 6, Palette.wood[0]);
+    px(ctx, 1, h - 9, w - 2, 4, Palette.woodLite[1]);
+    px(ctx, 1, h - 9, w - 2, 1, Palette.woodLite[3]);
+    px(ctx, 3, 2, 2, 7, Palette.wood[1]);
+    px(ctx, w - 5, 2, 2, 7, Palette.wood[1]);
+    px(ctx, 1, 2, w - 2, 3, Palette.woodLite[2]);
+    return { canvas, w, h };
+  },
+
+  /* ----- Flower bed ----- */
+  flowerbed() {
+    const w = 28, h = 14;
+    const { canvas, ctx } = makeBuffer(w, h);
+    px(ctx, 1, h - 7, w - 2, 7, Palette.dirt[1]); outline(ctx, 1, h - 7, w - 2, 7, Palette.dirt[0]);
+    for (const cx of [5, 12, 19, 24]) ringFill(ctx, cx, h - 8, 3, Palette.roofGreen[1]);
+    const flowers = [[5, '#d24b3a'], [12, '#e9c44a'], [19, '#e9e2d0'], [24, '#9a6ad2']];
+    for (const [fx, col] of flowers) { px(ctx, fx, h - 11, 2, 2, col); dot(ctx, fx, h - 12, '#fff1b0'); }
+    return { canvas, w, h };
+  },
+
+  /* ----- Leafy bush ----- */
+  bush() {
+    const w = 24, h = 18;
+    const { canvas, ctx } = makeBuffer(w, h);
+    px(ctx, 3, h - 2, w - 6, 2, Palette.shadow);
+    ringFill(ctx, 8, 12, 7, Palette.roofGreen[0]);
+    ringFill(ctx, 16, 13, 6, Palette.roofGreen[1]);
+    ringFill(ctx, 12, 9, 6, Palette.roofGreen[2]);
+    ringFill(ctx, 9, 7, 3, Palette.roofGreen[3]);
+    dot(ctx, 14, 11, '#d24b3a'); dot(ctx, 7, 13, '#d24b3a'); // berries
+    return { canvas, w, h };
+  },
+
+  /* ----- Barrel ----- */
+  barrel() {
+    const w = 16, h = 20;
+    const { canvas, ctx } = makeBuffer(w, h);
+    px(ctx, 3, h - 2, 10, 2, Palette.shadow);
+    px(ctx, 3, 2, 10, h - 4, Palette.wood[2]);
+    px(ctx, 3, 2, 2, h - 4, Palette.wood[1]);
+    px(ctx, 11, 2, 2, h - 4, Palette.wood[1]);
+    px(ctx, 7, 2, 1, h - 4, Palette.wood[3]);            // stave highlight
+    px(ctx, 3, 5, 10, 2, Palette.iron[2]);               // hoops
+    px(ctx, 3, h - 8, 10, 2, Palette.iron[2]);
+    px(ctx, 4, 1, 8, 2, Palette.wood[3]);                // lid
+    outline(ctx, 3, 2, 10, h - 4, Palette.wood[0]);
+    return { canvas, w, h };
+  },
+
+  /* ----- Stack of crates ----- */
+  crateStack() {
+    const w = 30, h = 28;
+    const { canvas, ctx } = makeBuffer(w, h);
+    px(ctx, 2, h - 2, w - 4, 2, Palette.shadow);
+    crate(ctx, 1, h - 15, 14);
+    crate(ctx, 15, h - 15, 14);
+    crate(ctx, 8, 0, 14);
+    return { canvas, w, h };
+  },
+
+  /* ----- Wood pile (log ends) ----- */
+  woodpile() {
+    const w = 34, h = 16;
+    const { canvas, ctx } = makeBuffer(w, h);
+    px(ctx, 2, h - 2, w - 4, 2, Palette.shadow);
+    const log = (cx, cy) => {
+      ringFill(ctx, cx, cy, 4, Palette.woodLite[2]);
+      ringPixel(ctx, cx, cy, 4, Palette.wood[0]);
+      ringPixel(ctx, cx, cy, 2, Palette.wood[3]);
+      dot(ctx, cx, cy, Palette.wood[1]);
+    };
+    for (const cx of [5, 13, 21, 29]) log(cx, h - 5);
+    for (const cx of [9, 17, 25]) log(cx, h - 12);
+    return { canvas, w, h };
+  },
+
+  /* ----- Hand cart ----- */
+  cart() {
+    const w = 38, h = 26;
+    const { canvas, ctx } = makeBuffer(w, h);
+    px(ctx, 4, h - 2, w - 8, 2, Palette.shadow);
+    const wheel = (cx) => {
+      ringFill(ctx, cx, h - 6, 5, Palette.wood[1]);
+      ringPixel(ctx, cx, h - 6, 5, Palette.wood[0]);
+      dot(ctx, cx, h - 6, Palette.iron[2]);
+    };
+    px(ctx, 4, h - 18, w - 10, 10, Palette.woodLite[1]); outline(ctx, 4, h - 18, w - 10, 10, Palette.wood[0]);
+    for (let x = 8; x < w - 8; x += 5) px(ctx, x, h - 18, 1, 10, Palette.wood[1]);
+    px(ctx, 8, h - 23, 8, 6, '#cdb06a');                 // hay sack
+    px(ctx, 19, h - 23, 9, 6, Palette.roofRed[2]);       // crate
+    px(ctx, w - 6, h - 16, 5, 2, Palette.wood[2]);       // handle
+    wheel(9); wheel(w - 13);
+    return { canvas, w, h };
+  },
+
+  /* ----- Hay bale ----- */
+  hayBale() {
+    const w = 26, h = 18;
+    const { canvas, ctx } = makeBuffer(w, h);
+    px(ctx, 2, h - 2, w - 4, 2, Palette.shadow);
+    px(ctx, 2, 3, w - 4, h - 6, '#c9a84e'); outline(ctx, 2, 3, w - 4, h - 6, '#9a7e2e');
+    speckle(ctx, 3, 4, w - 6, h - 8, ['#b89030', '#d4b45a', '#9a7e2e'], 17, 0.4);
+    px(ctx, 8, 3, 2, h - 6, '#7a5028');                  // bands
+    px(ctx, w - 10, 3, 2, h - 6, '#7a5028');
+    return { canvas, w, h };
+  },
+
+  /* ----- Direction signpost ----- */
+  signpost() {
+    const w = 20, h = 34;
+    const { canvas, ctx } = makeBuffer(w, h);
+    px(ctx, 7, h - 3, 7, 2, Palette.shadow);
+    px(ctx, 9, 4, 3, h - 6, Palette.wood[1]);
+    px(ctx, 7, h - 4, 7, 3, Palette.wood[0]);            // base
+    px(ctx, 8, 6, 11, 5, Palette.woodLite[2]); outline(ctx, 8, 6, 11, 5, Palette.wood[0]); // → board
+    px(ctx, 10, 8, 6, 1, Palette.wood[0]);
+    px(ctx, 1, 14, 11, 5, Palette.woodLite[1]); outline(ctx, 1, 14, 11, 5, Palette.wood[0]); // ← board
+    px(ctx, 4, 16, 6, 1, Palette.wood[0]);
+    return { canvas, w, h };
+  },
+
+  /* ----- Lone tree (front-view, matches forest marker) ----- */
+  tree() {
+    const w = 40, h = 54;
+    const { canvas, ctx } = makeBuffer(w, h);
+    px(ctx, 8, h - 4, 24, 4, Palette.shadow);
+    px(ctx, w / 2 - 3, h - 20, 6, 20, Palette.wood[1]);
+    px(ctx, w / 2 - 3, h - 20, 2, 20, Palette.wood[0]);
+    px(ctx, w / 2 + 1, h - 20, 1, 20, Palette.wood[2]);
+    ringFill(ctx, 20, 22, 17, Palette.roofGreen[0]);
+    ringFill(ctx, 20, 18, 15, Palette.roofGreen[1]);
+    ringFill(ctx, 16, 15, 11, Palette.roofGreen[2]);
+    ringFill(ctx, 25, 20, 8, Palette.roofGreen[1]);
+    ringFill(ctx, 15, 12, 5, Palette.roofGreen[3]);
+    dot(ctx, 24, 14, Palette.roofGreen[3]); dot(ctx, 12, 20, Palette.roofGreen[3]);
+    return { canvas, w, h };
+  },
 };
 
 /* circle helpers (pixel-rounded) */
@@ -189,6 +356,39 @@ function ringFill(ctx, cx, cy, r, color) {
     const span = Math.floor(Math.sqrt(r * r - y * y));
     px(ctx, cx - span, cy + y, span * 2 + 1, 1, color);
   }
+}
+
+/* ---- prop helpers ---- */
+
+/** A single wooden crate with an X-brace, drawn at (x,y) size s. */
+function crate(ctx, x, y, s) {
+  px(ctx, x, y, s, s, Palette.woodLite[1]);
+  outline(ctx, x, y, s, s, Palette.wood[0]);
+  px(ctx, x, y + (s >> 1) - 1, s, 2, Palette.wood[1]); // mid plank
+  for (let i = 1; i < s - 1; i++) {                    // X brace
+    dot(ctx, x + i, y + i, Palette.wood[2]);
+    dot(ctx, x + s - 1 - i, y + i, Palette.wood[2]);
+  }
+}
+
+/** A striped-awning market stall. Returns a sprite buffer. */
+function makeStall(awn, trim) {
+  const w = 52, h = 44;
+  const { canvas, ctx } = makeBuffer(w, h);
+  px(ctx, 3, h - 3, w - 6, 3, Palette.shadow);
+  px(ctx, 5, 10, 3, h - 12, Palette.wood[1]);          // posts
+  px(ctx, w - 8, 10, 3, h - 12, Palette.wood[1]);
+  px(ctx, 3, h - 16, w - 6, 13, Palette.woodLite[1]);  // counter
+  px(ctx, 3, h - 16, w - 6, 3, Palette.woodLite[3]);
+  const goods = ['#bf4d3f', '#4f8a55', '#e9c44a', '#4a87ad'];
+  for (let i = 0; i < 4; i++) px(ctx, 9 + i * 10, h - 23, 6, 6, goods[i]); // wares
+  for (let x = 2; x < w - 2; x += 8) {                 // striped awning
+    px(ctx, x, 2, 4, 14, awn);
+    px(ctx, x + 4, 2, 4, 14, trim);
+  }
+  px(ctx, 2, 2, w - 4, 2, Palette.wood[2]);            // valance
+  px(ctx, 2, 15, w - 4, 2, Palette.wood[2]);
+  return { canvas, w, h };
 }
 
 /** Public: get a cached structure sprite buffer by id. */

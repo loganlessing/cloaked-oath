@@ -29,8 +29,19 @@ export class TownMapSystem {
     // Resolve building sprite buffers + world rects up front.
     this.buildings = town.buildings.map((b) => {
       const buf = structure(b.sprite);
-      return { def: b, buf, w: buf ? buf.w : 32, h: buf ? buf.h : 32 };
+      return { def: b, buf, w: buf ? buf.w : 32, h: buf ? buf.h : 32, interactive: true };
     });
+
+    // Decorative props (non-interactive).
+    this.props = (town.props || []).map((p) => {
+      const buf = structure(p.sprite);
+      return { def: p, buf, w: buf ? buf.w : 16, h: buf ? buf.h : 16, interactive: false };
+    });
+
+    // Combined draw list, sorted by base-Y so nearer sprites overlap
+    // farther ones (simple painter's depth for the oblique view).
+    this._drawables = [...this.buildings, ...this.props]
+      .sort((a, b) => (a.def.y + a.h) - (b.def.y + b.h));
 
     this.hoverId = null;
     this._enabled = false;
@@ -166,22 +177,23 @@ export class TownMapSystem {
       this.town.world.h * this.camera.zoom
     );
 
-    // Buildings (only those whose centre is revealed).
-    for (const b of this.buildings) {
-      if (!b.buf) continue;
-      const cxw = b.def.x + b.w / 2, cyw = b.def.y + b.h / 2;
+    // Buildings + props, depth-sorted, only those whose centre is
+    // revealed by the fog.
+    for (const d of this._drawables) {
+      if (!d.buf) continue;
+      const cxw = d.def.x + d.w / 2, cyw = d.def.y + d.h / 2;
       if (!this.fog.isRevealed(cxw, cyw)) continue;
-      const s = this.camera.toScreen(b.def.x, b.def.y);
-      const dw = b.w * this.camera.zoom, dh = b.h * this.camera.zoom;
+      const s = this.camera.toScreen(d.def.x, d.def.y);
+      const dw = d.w * this.camera.zoom, dh = d.h * this.camera.zoom;
 
-      if (this.hoverId === b.def.id) {
+      if (d.interactive && this.hoverId === d.def.id) {
         ctx.save();
         ctx.shadowColor = 'rgba(243,196,74,0.9)';
         ctx.shadowBlur = 18;
-        ctx.drawImage(b.buf.canvas, s.x, s.y, dw, dh);
+        ctx.drawImage(d.buf.canvas, s.x, s.y, dw, dh);
         ctx.restore();
       } else {
-        ctx.drawImage(b.buf.canvas, s.x, s.y, dw, dh);
+        ctx.drawImage(d.buf.canvas, s.x, s.y, dw, dh);
       }
     }
 
