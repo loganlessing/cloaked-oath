@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Cloaked Oath</title>
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+  <!-- ============================================================= -->
+  <!-- Root application container. Screens are toggled via CSS class -->
+  <!-- ============================================================= -->
+  <div id="app">
+
+    <!-- ===================== MAIN MENU ===================== -->
+    <section id="main-menu" class="screen">
+      <div class="menu-art" id="menu-art"></div>
+      <div class="menu-content">
+        <h1 class="game-title">The Cloaked<span>Oath</span></h1>
+        <p class="game-subtitle">A medieval mystery unfolds&hellip;</p>
+        <nav class="menu-buttons">
+          <button class="btn btn-primary" data-action="start-game">Start Game</button>
+          <button class="btn" data-action="open-settings">Settings</button>
+        </nav>
+      </div>
+      <footer class="menu-footer">v0.1 &middot; base architecture</footer>
+    </section>
+
+    <!-- ===================== GAME VIEW (70/30) ===================== -->
+    <section id="game-view" class="screen">
+
+      <!-- Left 70% — the persistent town map. Never replaced. -->
+      <div id="map-pane" class="pane">
+        <canvas id="map-canvas"></canvas>
+
+        <!-- Pause button, top-left of the game view -->
+        <button id="pause-btn" class="icon-btn" title="Pause">&#10074;&#10074;</button>
+
+        <!-- Floating building interaction prompt (Enter / Look Inside / Locked) -->
+        <div id="building-prompt" class="building-prompt hidden"></div>
+
+        <!-- Opening cinematic letterbox bars -->
+        <div id="cinematic-bars" class="cinematic-bars hidden">
+          <div class="bar bar-top"></div>
+          <div class="bar bar-bottom"></div>
+        </div>
+      </div>
+
+      <!-- Right 30% — dynamic side panel (character tabs OR building interior) -->
+      <aside id="side-pane" class="pane"></aside>
+    </section>
+
+    <!-- ===================== PAUSE OVERLAY ===================== -->
+    <div id="pause-overlay" class="overlay hidden">
+      <div class="overlay-card">
+        <h2>Paused</h2>
+        <nav class="menu-buttons">
+          <button class="btn btn-primary" data-action="resume">Resume</button>
+          <button class="btn" data-action="open-settings">Settings</button>
+          <button class="btn" data-action="quit-to-menu">Quit to Menu</button>
+        </nav>
+      </div>
+    </div>
+
+    <!-- ===================== SETTINGS OVERLAY (placeholder) ===================== -->
+    <div id="settings-overlay" class="overlay hidden">
+      <div class="overlay-card">
+        <h2>Settings</h2>
+        <p class="muted">No settings available yet. This is a placeholder for future options
+          (audio, controls, display).</p>
+        <nav class="menu-buttons">
+          <button class="btn btn-primary" data-action="close-settings">Back</button>
+        </nav>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

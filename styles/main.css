@@ -1,0 +1,236 @@
+/* =================================================================
+   The Cloaked Oath — Global Styles
+   Medieval-fantasy dark UI. Pixel-art crispness is enforced on all
+   canvases so programmatically generated sprites stay sharp.
+   ================================================================= */
+
+:root {
+  --bg:        #0c0a12;
+  --panel:     #171320;
+  --panel-2:   #211a30;
+  --ink:       #e9e2d0;
+  --ink-dim:   #b6ac95;
+  --muted:     #8a8170;
+  --gold:      #e3b341;
+  --gold-deep: #b8862a;
+  --accent:    #6c5ce7;
+  --danger:    #c0563b;
+  --border:    #3a3050;
+  --shadow:    rgba(0, 0, 0, 0.55);
+  font-size: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  overflow: hidden;
+  user-select: none;
+}
+
+#app { position: relative; width: 100vw; height: 100vh; }
+
+/* Crisp pixel rendering for every canvas */
+canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+}
+
+/* ---------- Screen toggling ---------- */
+.screen { position: absolute; inset: 0; display: none; }
+.screen.active { display: flex; }
+.hidden { display: none !important; }
+
+/* ===================== MAIN MENU ===================== */
+#main-menu {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(120% 90% at 50% 18%, #221a33 0%, #0c0a12 70%);
+  text-align: center;
+}
+.menu-art {
+  position: absolute; inset: 0;
+  opacity: 0.35;
+  pointer-events: none;
+  background-size: cover;
+  background-position: center;
+}
+.menu-content { position: relative; z-index: 2; }
+.game-title {
+  font-size: clamp(2.6rem, 8vw, 5.5rem);
+  line-height: 0.95;
+  letter-spacing: 0.04em;
+  color: var(--gold);
+  text-shadow: 0 4px 0 var(--gold-deep), 0 6px 18px var(--shadow);
+}
+.game-title span { display: block; color: var(--ink); }
+.game-subtitle { margin-top: 1rem; color: var(--ink-dim); font-style: italic; letter-spacing: 0.08em; }
+.menu-buttons { display: flex; flex-direction: column; gap: 0.9rem; margin-top: 2.5rem; align-items: center; }
+.menu-footer { position: absolute; bottom: 1rem; color: var(--muted); font-size: 0.8rem; z-index: 2; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  min-width: 230px;
+  padding: 0.7rem 1.4rem;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+  background: var(--panel-2);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.btn:hover { background: #2c2340; border-color: var(--accent); transform: translateY(-1px); }
+.btn:active { transform: translateY(1px); }
+.btn-primary {
+  color: #1a130a;
+  background: linear-gradient(180deg, var(--gold) 0%, var(--gold-deep) 100%);
+  border-color: var(--gold-deep);
+  font-weight: 700;
+}
+.btn-primary:hover { background: linear-gradient(180deg, #f0c45a 0%, #c4922f 100%); border-color: var(--gold); }
+
+/* ===================== GAME VIEW (70 / 30) ===================== */
+#game-view { flex-direction: row; }
+.pane { position: relative; height: 100%; overflow: hidden; }
+#map-pane  { width: 70%; background: #0a0d08; }
+#side-pane { width: 30%; background: var(--panel); border-left: 3px solid var(--border); }
+#map-canvas { width: 100%; height: 100%; cursor: grab; }
+#map-canvas.panning { cursor: grabbing; }
+
+/* Pause button */
+.icon-btn {
+  position: absolute; top: 14px; left: 14px; z-index: 5;
+  width: 42px; height: 42px;
+  font-size: 0.85rem; letter-spacing: 2px;
+  color: var(--ink);
+  background: rgba(23, 19, 32, 0.82);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+}
+.icon-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Building interaction prompt */
+.building-prompt {
+  position: absolute; z-index: 6;
+  transform: translate(-50%, -100%);
+  background: rgba(16, 13, 24, 0.96);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem;
+  min-width: 150px;
+  box-shadow: 0 8px 24px var(--shadow);
+}
+.building-prompt h4 { color: var(--gold); font-size: 0.95rem; margin-bottom: 0.5rem; text-align: center; }
+.building-prompt .prompt-actions { display: flex; flex-direction: column; gap: 0.4rem; }
+.building-prompt button {
+  font-size: 0.85rem; padding: 0.45rem 0.7rem;
+  color: var(--ink); background: var(--panel-2);
+  border: 1px solid var(--border); border-radius: 5px; cursor: pointer;
+}
+.building-prompt button:hover { border-color: var(--accent); background: #2c2340; }
+.building-prompt button.locked { color: var(--muted); cursor: not-allowed; border-style: dashed; }
+.building-prompt button.locked:hover { border-color: var(--border); background: var(--panel-2); }
+
+/* Cinematic letterbox */
+.cinematic-bars { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.cinematic-bars .bar { position: absolute; left: 0; right: 0; height: 12%; background: #000; }
+.cinematic-bars .bar-top { top: 0; }
+.cinematic-bars .bar-bottom { bottom: 0; }
+
+/* ===================== SIDE PANEL: CHARACTER TABS ===================== */
+.tabs { display: flex; border-bottom: 2px solid var(--border); background: var(--panel-2); }
+.tab {
+  flex: 1; padding: 0.7rem 0.3rem;
+  font-size: 0.82rem; letter-spacing: 0.03em;
+  color: var(--ink-dim); background: transparent;
+  border: none; border-bottom: 3px solid transparent; cursor: pointer;
+}
+.tab:hover { color: var(--ink); }
+.tab.active { color: var(--gold); border-bottom-color: var(--gold); background: var(--panel); }
+.tab-body { padding: 1.1rem; overflow-y: auto; height: calc(100% - 46px); }
+
+.char-portrait {
+  width: 128px; height: 128px; margin: 0 auto 1rem;
+  border: 2px solid var(--border); border-radius: 8px; background: #100d18;
+}
+.char-name { text-align: center; color: var(--gold); font-size: 1.25rem; }
+.char-race { text-align: center; color: var(--ink-dim); font-style: italic; margin-bottom: 1rem; }
+.stat-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #241d33; font-size: 0.9rem; }
+.stat-row span:last-child { color: var(--gold); }
+.placeholder-note { color: var(--muted); font-size: 0.85rem; font-style: italic; text-align: center; margin-top: 1.5rem; }
+
+.grid-slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
+.slot { aspect-ratio: 1; border: 2px solid var(--border); border-radius: 6px; background: #100d18; }
+.slot.filled { border-color: var(--gold-deep); }
+
+/* ===================== SIDE PANEL: BUILDING INTERIOR ===================== */
+.interior-wrap { position: relative; width: 100%; height: 100%; }
+#interior-canvas { width: 100%; height: 100%; }
+.interior-header {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.6rem 0.8rem;
+  background: linear-gradient(180deg, rgba(12,10,18,0.92), transparent);
+}
+.interior-header h3 { color: var(--gold); font-size: 1rem; }
+.exit-btn {
+  font-size: 0.8rem; padding: 0.35rem 0.7rem; color: var(--ink);
+  background: rgba(23,19,32,0.85); border: 1px solid var(--border);
+  border-radius: 5px; cursor: pointer;
+}
+.exit-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Dialogue bubble (rendered over the interior canvas) */
+.dialogue-bubble {
+  position: absolute; z-index: 4;
+  transform: translate(-50%, -100%);
+  max-width: 80%;
+  background: rgba(16, 13, 24, 0.97);
+  border: 2px solid var(--gold-deep);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  box-shadow: 0 8px 24px var(--shadow);
+}
+.dialogue-bubble::after {
+  content: ""; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+  border: 8px solid transparent; border-top-color: var(--gold-deep);
+}
+.dialogue-speaker { color: var(--gold); font-size: 0.8rem; font-weight: 700; margin-bottom: 0.3rem; }
+.dialogue-text { color: var(--ink); font-size: 0.9rem; line-height: 1.35; margin-bottom: 0.6rem; }
+.dialogue-options { display: flex; flex-direction: column; gap: 0.35rem; }
+.dialogue-options button {
+  text-align: left; font-size: 0.85rem; padding: 0.4rem 0.6rem;
+  color: var(--ink-dim); background: var(--panel-2);
+  border: 1px solid var(--border); border-radius: 5px; cursor: pointer;
+}
+.dialogue-options button:hover { color: var(--ink); border-color: var(--accent); background: #2c2340; }
+.dialogue-options button.end { color: var(--muted); }
+
+/* ===================== OVERLAYS (pause / settings) ===================== */
+.overlay {
+  position: absolute; inset: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(6, 5, 10, 0.72);
+  backdrop-filter: blur(3px);
+}
+.overlay-card {
+  background: var(--panel);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem 2.4rem;
+  text-align: center;
+  box-shadow: 0 16px 48px var(--shadow);
+  max-width: 360px;
+}
+.overlay-card h2 { color: var(--gold); margin-bottom: 1rem; letter-spacing: 0.05em; }
+.overlay-card .muted { color: var(--muted); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.2rem; }
+.muted { color: var(--muted); }
