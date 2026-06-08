@@ -126,22 +126,49 @@ const builders = {
     return { canvas, w, h };
   },
 
-  /* ----- Golden fountain / statue at town centre ----- */
+  /* ----- Golden fountain / hooded statue at town centre -----
+     Higher-resolution so detail reads when scaled up: a tiered stone
+     basin, rippling water with sparkles, and a gilded hooded figure
+     (a quiet nod to the cult). */
   fountain() {
-    const w = 56, h = 56;
+    const w = 76, h = 76;
     const { canvas, ctx } = makeBuffer(w, h);
     const cx = w >> 1, cy = h >> 1;
-    // basin (stone ring)
-    for (let r = 24; r > 14; r--) ringPixel(ctx, cx, cy, r, Palette.stone[r % 2 ? 1 : 2]);
-    // water
-    for (let r = 14; r > 6; r--) ringPixel(ctx, cx, cy, r, Palette.water[(r % 3) + 1]);
-    // golden statue plinth
-    px(ctx, cx - 4, cy - 4, 8, 10, Palette.stone[2]);
-    // golden figure
-    px(ctx, cx - 3, cy - 14, 6, 12, Palette.gold[2]);
-    px(ctx, cx - 2, cy - 18, 4, 5, Palette.gold[3]); // head
-    px(ctx, cx + 3, cy - 12, 3, 8, Palette.gold[1]);  // raised arm
-    px(ctx, cx - 1, cy - 13, 2, 6, Palette.gold[3]);  // glint
+
+    // ground shadow
+    for (let r = 34; r > 31; r--) ringFill(ctx, cx, cy + 2, r, Palette.shadow);
+
+    // outer stone basin with a stepped rim
+    for (let r = 33; r > 25; r--) {
+      ringFill(ctx, cx, cy, r, Palette.stone[r > 30 ? 0 : (r % 2 ? 1 : 2)]);
+    }
+    ringPixel(ctx, cx, cy, 33, Palette.stone[0]);
+    ringPixel(ctx, cx, cy, 29, Palette.stone[3]); // rim highlight
+
+    // water pool with concentric ripples
+    for (let r = 25; r > 9; r--) {
+      ringFill(ctx, cx, cy, r, Palette.water[(r % 3) + 1]);
+    }
+    ringPixel(ctx, cx, cy, 21, Palette.water[3]);
+    ringPixel(ctx, cx, cy, 15, Palette.water[3]);
+    // sparkles
+    for (const [dx, dy] of [[-10, -6], [12, 4], [-6, 12], [8, -12], [0, 8]])
+      dot(ctx, cx + dx, cy + dy, '#bfe3f5');
+
+    // central plinth
+    px(ctx, cx - 6, cy - 4, 12, 12, Palette.stone[2]);
+    outline(ctx, cx - 6, cy - 4, 12, 12, Palette.stone[0]);
+    px(ctx, cx - 6, cy - 4, 12, 2, Palette.stone[3]);
+
+    // gilded hooded figure (cloak flares to the base)
+    px(ctx, cx - 2, cy - 24, 4, 4, Palette.gold[3]);     // hood crown
+    px(ctx, cx - 3, cy - 21, 6, 6, Palette.gold[2]);     // hood/face
+    px(ctx, cx - 1, cy - 19, 2, 3, Palette.gold[0]);     // shadowed face
+    px(ctx, cx - 4, cy - 16, 8, 10, Palette.gold[2]);    // shoulders/cloak
+    px(ctx, cx - 5, cy - 8, 10, 6, Palette.gold[1]);     // cloak hem flare
+    px(ctx, cx + 4, cy - 16, 3, 9, Palette.gold[1]);     // raised arm
+    px(ctx, cx + 5, cy - 18, 2, 3, Palette.gold[3]);     // hand/torch
+    px(ctx, cx - 2, cy - 15, 2, 9, Palette.gold[3]);     // gilt highlight
     return { canvas, w, h };
   },
 
@@ -339,6 +366,92 @@ const builders = {
     ringFill(ctx, 25, 20, 8, Palette.roofGreen[1]);
     ringFill(ctx, 15, 12, 5, Palette.roofGreen[3]);
     dot(ctx, 24, 14, Palette.roofGreen[3]); dot(ctx, 12, 20, Palette.roofGreen[3]);
+    return { canvas, w, h };
+  },
+
+  /* ----- Pine / conifer (forest variety) ----- */
+  pineTree() {
+    const w = 34, h = 58;
+    const { canvas, ctx } = makeBuffer(w, h);
+    const cx = w >> 1;
+    px(ctx, cx - 4, h - 4, 8, 4, Palette.shadow);
+    px(ctx, cx - 2, h - 14, 4, 14, Palette.wood[1]);      // trunk
+    px(ctx, cx - 2, h - 14, 1, 14, Palette.wood[0]);
+    // stacked foliage tiers, dark -> light up the tree
+    const tiers = [[h - 16, 15], [h - 28, 12], [h - 38, 9], [h - 46, 6]];
+    tiers.forEach(([ty, half], i) => {
+      const shade = Palette.roofGreen[i === 0 ? 0 : (i === tiers.length - 1 ? 3 : 1)];
+      for (let r = 0; r <= half; r++) {
+        px(ctx, cx - (half - r), ty + r, (half - r) * 2 + 1, 1, shade);
+      }
+    });
+    px(ctx, cx - 1, h - 50, 2, 4, Palette.roofGreen[3]);  // tip
+    return { canvas, w, h };
+  },
+
+  /* ----- Windmill (aesthetic; tower + sails) ----- */
+  windmill() {
+    const w = 80, h = 140;
+    const { canvas, ctx } = makeBuffer(w, h);
+    const cx = w >> 1;
+    px(ctx, cx - 22, h - 5, 44, 5, Palette.shadow);
+
+    // tapering stone tower
+    const topY = 44, botY = h - 4, topHalf = 16, botHalf = 26;
+    for (let y = topY; y < botY; y++) {
+      const t = (y - topY) / (botY - topY);
+      const half = Math.round(topHalf + (botHalf - topHalf) * t);
+      px(ctx, cx - half, y, half * 2, 1, Palette.stone[1 + (y % 2)]);
+    }
+    // stone banding + edges
+    for (let y = topY + 8; y < botY; y += 12) px(ctx, cx - 26, y, 52, 1, Palette.stone[0]);
+    px(ctx, cx - botHalf, botY - 1, botHalf * 2, 1, Palette.stone[0]);
+    // door + windows
+    px(ctx, cx - 6, botY - 22, 12, 22, Palette.wood[1]); outline(ctx, cx - 6, botY - 22, 12, 22, Palette.wood[3]);
+    px(ctx, cx - 8, topY + 14, 6, 7, Palette.glassLit[2]); outline(ctx, cx - 8, topY + 14, 6, 7, Palette.wood[0]);
+    px(ctx, cx + 2, topY + 14, 6, 7, Palette.glassLit[2]); outline(ctx, cx + 2, topY + 14, 6, 7, Palette.wood[0]);
+
+    // conical cap
+    for (let r = 0; r <= 20; r++) px(ctx, cx - (20 - r), topY - 22 + r, (20 - r) * 2 + 1, 1, Palette.roofRed[1 + (r % 2)]);
+    px(ctx, cx - 1, topY - 26, 2, 4, Palette.iron[2]);    // finial
+
+    // four sails (X) with lattice blades around the hub
+    const hubY = topY - 2;
+    px(ctx, cx - 3, hubY - 3, 6, 6, Palette.wood[3]); outline(ctx, cx - 3, hubY - 3, 6, 6, Palette.wood[0]);
+    const blade = (dx, dy) => {
+      for (let i = 6; i < 34; i += 2) {
+        px(ctx, cx + Math.round(dx * i), hubY + Math.round(dy * i), 3, 3, Palette.wood[2]);
+        if (i % 6 === 0) px(ctx, cx + Math.round(dx * i) - 2, hubY + Math.round(dy * i) - 2, 7, 1, '#cdbf9a');
+      }
+    };
+    blade(0.7, -0.7); blade(0.7, 0.7); blade(-0.7, 0.7); blade(-0.7, -0.7);
+    return { canvas, w, h };
+  },
+
+  /* ----- Field crop row ----- */
+  crop() {
+    const w = 28, h = 16;
+    const { canvas, ctx } = makeBuffer(w, h);
+    px(ctx, 1, h - 5, w - 2, 5, Palette.dirt[1]);         // mounded soil
+    px(ctx, 1, h - 5, w - 2, 1, Palette.dirt[3]);
+    for (let x = 3; x < w - 2; x += 5) {
+      px(ctx, x, h - 11, 2, 7, Palette.roofGreen[2]);     // stalk
+      px(ctx, x - 1, h - 13, 4, 3, Palette.roofGreen[3]); // leafy top
+      dot(ctx, x, h - 13, Palette.gold[3]);               // grain
+    }
+    return { canvas, w, h };
+  },
+
+  /* ----- Fence segment (horizontal) ----- */
+  fence() {
+    const w = 26, h = 16;
+    const { canvas, ctx } = makeBuffer(w, h);
+    px(ctx, 3, h - 4, 3, 4, Palette.wood[0]);             // posts
+    px(ctx, w - 6, h - 4, 3, 4, Palette.wood[0]);
+    px(ctx, 3, 3, 3, h - 4, Palette.wood[1]);
+    px(ctx, w - 6, 3, 3, h - 4, Palette.wood[1]);
+    px(ctx, 1, 5, w - 2, 2, Palette.woodLite[1]);         // rails
+    px(ctx, 1, 10, w - 2, 2, Palette.woodLite[1]);
     return { canvas, w, h };
   },
 };

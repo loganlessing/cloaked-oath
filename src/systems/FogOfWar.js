@@ -1,72 +1,90 @@
 /* =================================================================
-   FogOfWar — hides the world outside revealed regions.
+   FogOfWar — hides the world outside the explored area.
 
-   Revealed regions are world-space circles. The system renders a dark
-   overlay and "punches" soft holes where the world is known. Future
-   systems reveal more by emitting Events.FOG_REVEAL with { x, y, r },
-   enabling exploration/backtracking gates without touching this file.
+   The revealed region is shape-based, not a flat circle: it follows
+   the town clearing outline plus the exit roads, so the fog hugs the
+   organic town/forest silhouette. It is rendered on an offscreen
+   layer and blurred, giving a soft, gradual fade into darkness.
+
+   Future systems reveal more by emitting Events.FOG_REVEAL with a
+   { x, y, r } circle (e.g. opening a gate or entering a new area).
    ================================================================= */
 
 import { bus, Events } from '../core/EventBus.js';
+import { buildSmoothPath, pointInPolygon, nearPolyline } from '../core/geometry.js';
 
 export class FogOfWar {
-  constructor(regions = []) {
-    this.regions = regions.map((r) => ({ ...r })); // clone
-    // Offscreen layer so "punching" holes only erases the veil, never
-    // the terrain/buildings beneath it on the main canvas.
+  /**
+   * @param {object} mask
+   *   polygon   - world-space clearing outline (revealed area)
+   *   corridors - [{ points, width }] roads revealed into the forest
+   *   circles   - [{ x, y, r }] extra revealed discs (dynamic)
+   */
+  constructor({ polygon = [], corridors = [], circles = [] } = {}) {
+    this.polygon = polygon;
+    this.corridors = corridors;
+    this.circles = circles.map((c) => ({ ...c }));
+    this.blur = 30;             // softness of the fade (screen px)
+
     this._layer = document.createElement('canvas');
     this._lctx = this._layer.getContext('2d');
-    bus.on(Events.FOG_REVEAL, (region) => this.reveal(region));
+
+    bus.on(Events.FOG_REVEAL, (region) => this.circles.push({ ...region }));
   }
 
-  reveal(region) {
-    this.regions.push({ ...region });
-  }
-
-  /** Is a world point currently visible? */
+  /** Is a world point currently within the revealed area? */
   isRevealed(wx, wy) {
-    return this.regions.some(
-      (r) => (wx - r.x) ** 2 + (wy - r.y) ** 2 <= r.r * r.r
-    );
+    const p = { x: wx, y: wy };
+    if (this.polygon.length && pointInPolygon(p, this.polygon)) return true;
+    for (const c of this.corridors) if (nearPolyline(p, c.points, c.width / 2)) return true;
+    for (const c of this.circles) if ((wx - c.x) ** 2 + (wy - c.y) ** 2 <= c.r * c.r) return true;
+    return false;
   }
 
-  /**
-   * Draw fog over the map. Called after terrain/buildings so it sits
-   * on top. `ctx` is the map canvas 2D context (screen space).
-   */
+  /** Draw the fog over the map (called after terrain/props/buildings). */
   render(ctx, camera) {
     const { w, h } = camera.viewport;
-    const lctx = this._lctx;
-
-    // Size the fog layer to the viewport (in CSS px; ctx is already
-    // DPR-scaled, so we match the camera viewport dimensions).
+    const lc = this._lctx;
     if (this._layer.width !== w || this._layer.height !== h) {
       this._layer.width = Math.max(1, w);
       this._layer.height = Math.max(1, h);
     }
 
-    // 1) Dark veil over the whole fog layer.
-    lctx.globalCompositeOperation = 'source-over';
-    lctx.clearRect(0, 0, w, h);
-    lctx.fillStyle = 'rgba(6, 5, 12, 0.96)';
-    lctx.fillRect(0, 0, w, h);
+    // 1) Solid veil over the whole viewport.
+    lc.globalCompositeOperation = 'source-over';
+    lc.filter = 'none';
+    lc.clearRect(0, 0, w, h);
+    lc.fillStyle = 'rgba(5, 4, 10, 0.98)';
+    lc.fillRect(0, 0, w, h);
 
-    // 2) Punch soft holes for revealed regions — only erases the veil
-    //    on this layer, so terrain underneath is untouched.
-    lctx.globalCompositeOperation = 'destination-out';
-    for (const r of this.regions) {
-      const c = camera.toScreen(r.x, r.y);
-      const rad = r.r * camera.zoom;
-      const grad = lctx.createRadialGradient(c.x, c.y, rad * 0.6, c.x, c.y, rad);
-      grad.addColorStop(0, 'rgba(0,0,0,1)');
-      grad.addColorStop(1, 'rgba(0,0,0,0)');
-      lctx.fillStyle = grad;
-      lctx.beginPath();
-      lctx.arc(c.x, c.y, rad, 0, Math.PI * 2);
-      lctx.fill();
+    // 2) Erase the revealed shape with a blur, so the veil fades
+    //    smoothly along the town/forest silhouette.
+    lc.globalCompositeOperation = 'destination-out';
+    lc.filter = `blur(${this.blur}px)`;
+    lc.fillStyle = '#000';
+    lc.strokeStyle = '#000';
+    lc.lineCap = 'round';
+    lc.lineJoin = 'round';
+
+    if (this.polygon.length) {
+      const sp = this.polygon.map((p) => camera.toScreen(p.x, p.y));
+      lc.fill(buildSmoothPath(sp, true));
+    }
+    for (const c of this.corridors) {
+      const cs = c.points.map((p) => camera.toScreen(p.x, p.y));
+      lc.lineWidth = (c.width || 60) * camera.zoom;
+      lc.stroke(buildSmoothPath(cs, false));
+    }
+    for (const c of this.circles) {
+      const s = camera.toScreen(c.x, c.y);
+      lc.beginPath();
+      lc.arc(s.x, s.y, c.r * camera.zoom, 0, Math.PI * 2);
+      lc.fill();
     }
 
-    // 3) Composite the finished fog layer over the world.
+    // 3) Composite the finished fog over the world.
+    lc.filter = 'none';
+    lc.globalCompositeOperation = 'source-over';
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(this._layer, 0, 0, w, h);
   }

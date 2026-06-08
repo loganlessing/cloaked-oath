@@ -41,6 +41,15 @@ function build(kind) {
       px(ctx, 0, 0, TILE, TILE, Palette.grass[0]);
       speckle(ctx, 0, 0, TILE, TILE, Palette.roofGreen, 71, 0.45);
       break;
+    case 'soil':
+      // Tilled farm rows.
+      px(ctx, 0, 0, TILE, TILE, Palette.dirt[2]);
+      for (let y = 0; y < TILE; y += 4) {
+        px(ctx, 0, y, TILE, 2, Palette.dirt[0]);
+        px(ctx, 0, y + 2, TILE, 1, Palette.dirt[3]);
+      }
+      speckle(ctx, 0, 0, TILE, TILE, Palette.dirt, 13, 0.12);
+      break;
     default:
       px(ctx, 0, 0, TILE, TILE, Palette.grass[1]);
   }
